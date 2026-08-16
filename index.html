@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>胃管深度计算器</title>
+  <style>
+    :root { --ink:#17324d; --blue:#1479ba; --pale:#edf8ff; --line:#cbddea; --muted:#60778b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; color:var(--ink); background:linear-gradient(145deg,#e7f7ff,#f8fcff 55%,#e8f2fa); display:grid; place-items:center; padding:24px; }
+    main { width:min(650px,100%); background:#fff; border:1px solid #d7e7f0; border-radius:22px; box-shadow:0 15px 48px #27638422; overflow:hidden; }
+    header { padding:28px 30px 22px; color:#fff; background:linear-gradient(115deg,#0d6da8,#1b9bc1); }
+    h1 { margin:0; font-size:26px; letter-spacing:.02em; } header p { margin:7px 0 0; opacity:.9; font-size:14px; }
+    .content { padding:26px 30px 30px; }
+    label { display:block; font-size:15px; font-weight:650; margin-bottom:9px; }
+    .input-row { display:flex; gap:10px; } input { width:100%; height:52px; border:2px solid var(--line); border-radius:12px; padding:0 15px; font-size:20px; color:var(--ink); outline:none; } input:focus { border-color:var(--blue); }
+    button { flex:0 0 112px; border:0; border-radius:12px; background:var(--blue); color:#fff; font-size:16px; font-weight:650; cursor:pointer; } button:hover { background:#0b659f; }
+    #message { min-height:22px; margin:8px 0 0; color:#b42318; font-size:13px; }
+    .results { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+    .card { padding:18px; border:1px solid var(--line); border-radius:15px; background:var(--pale); }
+    .card h2 { margin:0; color:#386177; font-size:15px; font-weight:600; } .depth { margin:9px 0 4px; color:#0b6da9; font-size:34px; line-height:1; font-weight:750; } .external { margin-top:13px; padding-top:12px; border-top:1px solid #c9e1ee; color:#265f7d; font-size:14px; } .external strong { display:block; margin-top:3px; color:#0b6da9; font-size:22px; } .detail { color:var(--muted); font-size:13px; }
+    .reference { margin:22px 0 0; padding:15px 16px; border-radius:12px; background:#fff8e8; color:#675628; font-size:13px; line-height:1.65; }
+    .formula { margin-top:18px; color:#4b6576; font-size:13px; line-height:1.75; } .formula strong { color:var(--ink); }
+    .disclaimer { margin:18px 0 0; padding-top:16px; border-top:1px solid #e2eaf0; color:#667886; font-size:12px; line-height:1.65; }
+    @media (max-width:470px) { body { padding:12px; } header,.content { padding-left:20px; padding-right:20px; } .results { grid-template-columns:1fr; } .input-row { flex-wrap:wrap; } button { height:46px; flex-basis:100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header><h1>胃管深度计算器</h1><p>基于体重的鼻胃管／口胃管长度参考</p></header>
+    <div class="content">
+      <label for="weight">体重（kg）</label>
+      <div class="input-row"><input id="weight" type="number" min="0.1" max="100" step="0.001" inputmode="decimal" placeholder="例如：3.2"><button id="calculate">计算</button></div>
+      <div id="message" role="alert"></div>
+      <section class="results" aria-live="polite">
+        <article class="card"><h2>鼻胃管 NGT</h2><div class="depth" id="ngt">—</div><div class="detail" id="ngt-detail">请输入体重</div><div class="external">外露长度（总长 62 cm）<strong id="ngt-external">—</strong></div></article>
+        <article class="card"><h2>口胃管 OGT</h2><div class="depth" id="ogt">—</div><div class="detail" id="ogt-detail">请输入体重</div><div class="external">外露长度（总长 62 cm）<strong id="ogt-external">—</strong></div></article>
+      </section>
+      <div class="reference" id="reference">输入 5.5 kg 及以下的新生儿体重时，将按文档中的体重区间对照表给出建议整数深度。</div>
+      <div class="formula"><strong>文档公式：</strong>NGT = 3 × 体重(kg) + 13 cm；OGT = 3 × 体重(kg) + 12 cm。</div>
+      <p class="disclaimer">仅作计算辅助与教学参考，不能替代临床评估、科室规范和置管后位置确认。请由具备资质的医护人员按本机构流程操作。</p>
+    </div>
+  </main>
+  <script>
+    // 对照表的分界值；比较时用“下一个上限”覆盖任意小数输入，避免 0.5001 kg 一类的空档。
+    const ranges = [[.5,14],[.8,15],[1.1,16],[1.5,17],[1.8,18],[2.1,19],[2.5,20],[2.8,21],[3.1,22],[3.5,23],[3.8,24],[4.1,25],[4.5,26],[4.8,27],[5.1,28],[5.5,29]];
+    const $ = id => document.getElementById(id);
+    const tubeLength = 62;
+    function showDepth(id, detailId, externalId, depth, detail) {
+      $(id).textContent = depth + " cm";
+      $(detailId).textContent = detail;
+      $(externalId).textContent = (tubeLength - depth).toFixed(1).replace(/\.0$/, "") + " cm";
+    }
+    function calculate() {
+      const weight = Number.parseFloat($("weight").value);
+      $("message").textContent = "";
+      if (!Number.isFinite(weight) || weight <= 0) { $("message").textContent = "请输入大于 0 的体重（kg）。"; return; }
+      const found = ranges.find(([max]) => weight <= max);
+      const ngtFormula = 3 * weight + 13, ogtFormula = 3 * weight + 12;
+      if (found) {
+        const ngt = found[1], ogt = ngt - 1;
+        showDepth("ngt", "ngt-detail", "ngt-external", ngt, "文档体重区间对照表");
+        showDepth("ogt", "ogt-detail", "ogt-external", ogt, "文档体重区间对照表");
+        $("reference").textContent = `体重 ${weight} kg：采用文档所列区间的整数厘米深度。公式参考值：NGT ${ngtFormula.toFixed(1)} cm，OGT ${ogtFormula.toFixed(1)} cm。`;
+      } else {
+        showDepth("ngt", "ngt-detail", "ngt-external", ngtFormula, "按文档公式计算");
+        showDepth("ogt", "ogt-detail", "ogt-external", ogtFormula, "按文档公式计算");
+        $("reference").textContent = "该体重不在文档所附的 0–5.5 kg 对照表范围内，以上为公式计算结果，请结合临床规范确认。";
+      }
+    }
+    $("calculate").addEventListener("click", calculate);
+    $("weight").addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+  </script>
+</body>
+</html>
