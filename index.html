@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>胃管深度计算器</title>
+  <title>æ°çå¿èç®¡æ·±åº¦è®¡ç®å¨</title>
   <style>
     :root { --ink:#17324d; --blue:#1479ba; --pale:#edf8ff; --line:#cbddea; --muted:#60778b; }
     * { box-sizing:border-box; }
@@ -27,22 +27,22 @@
 </head>
 <body>
   <main>
-    <header><h1>胃管深度计算器</h1><p>基于体重的鼻胃管／口胃管长度参考</p></header>
+    <header><h1>æ°çå¿èç®¡æ·±åº¦è®¡ç®å¨</h1><p>åºäºä½éçé¼»èç®¡ï¼å£èç®¡é¿åº¦åè</p></header>
     <div class="content">
-      <label for="weight">体重（kg）</label>
-      <div class="input-row"><input id="weight" type="number" min="0.1" max="100" step="0.001" inputmode="decimal" placeholder="例如：3.2"><button id="calculate">计算</button></div>
+      <label for="weight">ä½éï¼kgï¼</label>
+      <div class="input-row"><input id="weight" type="number" min="0.1" max="100" step="0.001" inputmode="decimal" placeholder="ä¾å¦ï¼3.2"><button id="calculate">è®¡ç®</button></div>
       <div id="message" role="alert"></div>
       <section class="results" aria-live="polite">
-        <article class="card"><h2>鼻胃管 NGT</h2><div class="depth" id="ngt">—</div><div class="detail" id="ngt-detail">请输入体重</div><div class="external">外露长度（总长 62 cm）<strong id="ngt-external">—</strong></div></article>
-        <article class="card"><h2>口胃管 OGT</h2><div class="depth" id="ogt">—</div><div class="detail" id="ogt-detail">请输入体重</div><div class="external">外露长度（总长 62 cm）<strong id="ogt-external">—</strong></div></article>
+        <article class="card"><h2>é¼»èç®¡ NGT</h2><div class="depth" id="ngt">â</div><div class="detail" id="ngt-detail">è¯·è¾å¥ä½é</div><div class="external">å¤é²é¿åº¦ï¼æ»é¿ 62 cmï¼<strong id="ngt-external">â</strong></div></article>
+        <article class="card"><h2>å£èç®¡ OGT</h2><div class="depth" id="ogt">â</div><div class="detail" id="ogt-detail">è¯·è¾å¥ä½é</div><div class="external">å¤é²é¿åº¦ï¼æ»é¿ 62 cmï¼<strong id="ogt-external">â</strong></div></article>
       </section>
-      <div class="reference" id="reference">输入 5.5 kg 及以下的新生儿体重时，将按文档中的体重区间对照表给出建议整数深度。</div>
-      <div class="formula"><strong>文档公式：</strong>NGT = 3 × 体重(kg) + 13 cm；OGT = 3 × 体重(kg) + 12 cm。</div>
-      <p class="disclaimer">仅作计算辅助与教学参考，不能替代临床评估、科室规范和置管后位置确认。请由具备资质的医护人员按本机构流程操作。</p>
+      <div class="reference" id="reference">è¾å¥ 5.5 kg åä»¥ä¸çæ°çå¿ä½éæ¶ï¼å°æææ¡£ä¸­çä½éåºé´å¯¹ç§è¡¨ç»åºå»ºè®®æ´æ°æ·±åº¦ã</div>
+      <div class="formula"><strong>ææ¡£å¬å¼ï¼</strong>NGT = 3 Ã ä½é(kg) + 13 cmï¼OGT = 3 Ã ä½é(kg) + 12 cmã</div>
+      <p class="disclaimer">ä»ä½è®¡ç®è¾å©ä¸æå­¦åèï¼ä¸è½æ¿ä»£ä¸´åºè¯ä¼°ãç§å®¤è§èåç½®ç®¡åä½ç½®ç¡®è®¤ãè¯·ç±å·å¤èµè´¨çå»æ¤äººåææ¬æºææµç¨æä½ã</p>
     </div>
   </main>
   <script>
-    // 对照表的分界值；比较时用“下一个上限”覆盖任意小数输入，避免 0.5001 kg 一类的空档。
+    // å¯¹ç§è¡¨çåçå¼ï¼æ¯è¾æ¶ç¨âä¸ä¸ä¸ªä¸éâè¦çä»»æå°æ°è¾å¥ï¼é¿å 0.5001 kg ä¸ç±»çç©ºæ¡£ã
     const ranges = [[.5,14],[.8,15],[1.1,16],[1.5,17],[1.8,18],[2.1,19],[2.5,20],[2.8,21],[3.1,22],[3.5,23],[3.8,24],[4.1,25],[4.5,26],[4.8,27],[5.1,28],[5.5,29]];
     const $ = id => document.getElementById(id);
     const tubeLength = 62;
@@ -54,18 +54,18 @@
     function calculate() {
       const weight = Number.parseFloat($("weight").value);
       $("message").textContent = "";
-      if (!Number.isFinite(weight) || weight <= 0) { $("message").textContent = "请输入大于 0 的体重（kg）。"; return; }
+      if (!Number.isFinite(weight) || weight <= 0) { $("message").textContent = "è¯·è¾å¥å¤§äº 0 çä½éï¼kgï¼ã"; return; }
       const found = ranges.find(([max]) => weight <= max);
       const ngtFormula = 3 * weight + 13, ogtFormula = 3 * weight + 12;
       if (found) {
         const ngt = found[1], ogt = ngt - 1;
-        showDepth("ngt", "ngt-detail", "ngt-external", ngt, "文档体重区间对照表");
-        showDepth("ogt", "ogt-detail", "ogt-external", ogt, "文档体重区间对照表");
-        $("reference").textContent = `体重 ${weight} kg：采用文档所列区间的整数厘米深度。公式参考值：NGT ${ngtFormula.toFixed(1)} cm，OGT ${ogtFormula.toFixed(1)} cm。`;
+        showDepth("ngt", "ngt-detail", "ngt-external", ngt, "ææ¡£ä½éåºé´å¯¹ç§è¡¨");
+        showDepth("ogt", "ogt-detail", "ogt-external", ogt, "ææ¡£ä½éåºé´å¯¹ç§è¡¨");
+        $("reference").textContent = `ä½é ${weight} kgï¼éç¨ææ¡£æååºé´çæ´æ°åç±³æ·±åº¦ãå¬å¼åèå¼ï¼NGT ${ngtFormula.toFixed(1)} cmï¼OGT ${ogtFormula.toFixed(1)} cmã`;
       } else {
-        showDepth("ngt", "ngt-detail", "ngt-external", ngtFormula, "按文档公式计算");
-        showDepth("ogt", "ogt-detail", "ogt-external", ogtFormula, "按文档公式计算");
-        $("reference").textContent = "该体重不在文档所附的 0–5.5 kg 对照表范围内，以上为公式计算结果，请结合临床规范确认。";
+        showDepth("ngt", "ngt-detail", "ngt-external", ngtFormula, "æææ¡£å¬å¼è®¡ç®");
+        showDepth("ogt", "ogt-detail", "ogt-external", ogtFormula, "æææ¡£å¬å¼è®¡ç®");
+        $("reference").textContent = "è¯¥ä½éä¸å¨ææ¡£æéç 0â5.5 kg å¯¹ç§è¡¨èå´åï¼ä»¥ä¸ä¸ºå¬å¼è®¡ç®ç»æï¼è¯·ç»åä¸´åºè§èç¡®è®¤ã";
       }
     }
     $("calculate").addEventListener("click", calculate);
