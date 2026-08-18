@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TPN 滴速与累积量计算器</title>
+  <style>
+    :root { --ink:#16334f; --blue:#137db7; --aqua:#eaf8ff; --line:#cde0ec; --muted:#5f7587; --warn:#725612; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; color:var(--ink); background:linear-gradient(145deg,#e8f8ff,#fbfdff 58%,#e8f1f8); }
+    main { width:min(650px,100%); overflow:hidden; background:#fff; border:1px solid #d5e6ef; border-radius:22px; box-shadow:0 15px 48px #27638422; }
+    header { padding:28px 30px 22px; color:#fff; background:linear-gradient(115deg,#0b6ca7,#1d9abe); } h1 { margin:0; font-size:26px; } header p { margin:7px 0 0; font-size:14px; opacity:.9; }
+    .content { padding:26px 30px 30px; } label { display:block; margin-bottom:9px; font-size:15px; font-weight:650; }
+    .input-row { display:flex; gap:10px; } input { width:100%; height:52px; padding:0 15px; border:2px solid var(--line); border-radius:12px; outline:0; color:var(--ink); font-size:20px; } input:focus { border-color:var(--blue); }
+    button { flex:0 0 112px; border:0; border-radius:12px; background:var(--blue); color:#fff; cursor:pointer; font-size:16px; font-weight:650; } button:hover { background:#096395; }
+    #message { min-height:22px; margin-top:8px; color:#b42318; font-size:13px; }
+    #mode { margin:12px 0 0; padding:11px 13px; border-radius:10px; color:#315f78; background:#eef9fd; font-size:13px; line-height:1.55; }
+    .results { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }.card { padding:18px; border:1px solid var(--line); border-radius:15px; background:var(--aqua); }.card h2 { margin:0; color:#386177; font-size:15px; font-weight:600; }.number { margin:9px 0 4px; color:#0a6ea9; font-size:34px; font-weight:750; line-height:1; }.detail { color:var(--muted); font-size:13px; }
+    .formula { margin-top:20px; padding:14px 16px; border-radius:12px; background:#fff8e8; color:var(--warn); font-size:13px; line-height:1.7; }.formula strong { color:#5f4c12; }.disclaimer { margin:18px 0 0; padding-top:16px; border-top:1px solid #e2eaf0; color:#667886; font-size:12px; line-height:1.65; }
+    @media (max-width:470px) { body { padding:12px; } header,.content { padding-left:20px; padding-right:20px; }.input-row { flex-wrap:wrap; } button { flex-basis:100%; height:46px; }.results { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header><h1>TPN 滴速与累积量计算器</h1><p>根据 TPN 总量快速计算输注速率与每 6 小时累积量</p></header>
+    <div class="content">
+      <label for="volume">TPN 总量（mL）</label>
+      <div class="input-row"><input id="volume" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="例如：120"><button id="calculate">计算</button></div>
+      <div id="message" role="alert"></div>
+      <div id="mode">请输入 TPN 总量。≤60 mL 将按针筒模式计算；＞60 mL 将扣除皮条预充量 20 mL。</div>
+      <section class="results" aria-live="polite">
+        <article class="card"><h2>输注速率</h2><div class="number" id="rate">—</div><div class="detail" id="rate-detail">单位：mL/h</div></article>
+        <article class="card"><h2>每 6 小时累积量</h2><div class="number" id="cumulative">—</div><div class="detail" id="cumulative-detail">单位：mL</div></article>
+      </section>
+      <div class="formula" id="formula"><strong>计算规则：</strong>＞60 mL：滴速 =（总量 − 20 mL）÷ 24 h；≤60 mL：针筒抽取，无需扣除 20 mL，滴速 = 总量 ÷ 24 h。每 6 小时累积量 = 总量 ÷ 6。</div>
+      <p class="disclaimer">仅作临床计算辅助参考。请结合医嘱、实际输液装置与科室规范复核；滴速单位为 mL/h，不等同于按滴系数换算的滴/min。</p>
+    </div>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    const pretty = n => n.toFixed(1).replace(/\.0$/, "");
+    function calculate() {
+      const total = Number.parseFloat($("volume").value);
+      $("message").textContent = "";
+      if (!Number.isFinite(total) || total <= 0) { $("message").textContent = "请输入大于 0 的 TPN 总量（mL）。"; return; }
+      const syringe = total <= 60;
+      const rate = (syringe ? total : total - 20) / 24;
+      const cumulative = total / 6;
+      $("rate").textContent = pretty(rate) + " mL/h";
+      $("cumulative").textContent = pretty(cumulative) + " mL";
+      $("rate-detail").textContent = syringe ? "针筒模式：未扣除皮条量" : "皮条模式：已扣除 20 mL 预充量";
+      $("cumulative-detail").textContent = "总量 ÷ 6";
+      $("mode").textContent = syringe ? `针筒模式：总量 ${pretty(total)} mL（≤60 mL），不扣除皮条预充量。` : `皮条模式：总量 ${pretty(total)} mL（＞60 mL），滴速计算已扣除 20 mL 皮条预充量。`;
+    }
+    $("calculate").addEventListener("click", calculate);
+    $("volume").addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+  </script>
+</body>
+</html>
